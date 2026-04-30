@@ -1,0 +1,23 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+venv/
+.venv/
+env/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Optional: Ignore the model if it gets too large (currently 1.9MB so it's okay, but just in case)
+# backend/model.pkl
+
+# React build
+frontend/build/

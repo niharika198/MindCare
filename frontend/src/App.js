@@ -1,5 +1,60 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import "./App.css";
+
+function HeroIllustration() {
+  return (
+    <svg
+      className="hero-illustration"
+      viewBox="0 0 520 420"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="mh-sky" x1="40" y1="0" x2="480" y2="420" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#e9d5ff" />
+          <stop offset="0.45" stopColor="#fce7f3" />
+          <stop offset="1" stopColor="#fed7aa" />
+        </linearGradient>
+        <linearGradient id="mh-hill" x1="260" y1="260" x2="260" y2="400">
+          <stop stopColor="#c4b5fd" stopOpacity="0.35" />
+          <stop offset="1" stopColor="#a5b4fc" stopOpacity="0.12" />
+        </linearGradient>
+      </defs>
+      <rect x="8" y="8" width="504" height="404" rx="36" fill="url(#mh-sky)" />
+      <ellipse cx="270" cy="360" rx="210" ry="48" fill="url(#mh-hill)" />
+      <circle className="hero-svg-sun" cx="400" cy="96" r="44" fill="#fde68a" opacity="0.95" />
+      <ellipse cx="120" cy="320" rx="56" ry="18" fill="#86efac" opacity="0.45" />
+      <ellipse cx="400" cy="300" rx="48" ry="16" fill="#6ee7b7" opacity="0.35" />
+      <g className="hero-svg-figure">
+        <ellipse cx="230" cy="300" rx="72" ry="24" fill="#c7d2fe" opacity="0.55" />
+        <path
+          d="M230 200v72c0 24 20 44 44 44h8"
+          stroke="#6366f1"
+          strokeWidth="14"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx="230" cy="168" r="40" fill="#fef9c3" stroke="#fbbf24" strokeWidth="2.5" />
+        <path
+          d="M188 168c8-16 24-26 42-26s34 10 42 26"
+          stroke="#475569"
+          strokeWidth="3"
+          strokeLinecap="round"
+          opacity="0.35"
+        />
+      </g>
+      <circle className="hero-svg-dot" cx="100" cy="120" r="10" fill="#f472b6" opacity="0.65" />
+      <circle className="hero-svg-dot hero-svg-dot--delay" cx="360" cy="200" r="8" fill="#818cf8" opacity="0.6" />
+      <path
+        className="hero-svg-leaf"
+        d="M420 240c20-32 48-48 72-40-16 28-48 44-80 44-6-8-4-8 8-4z"
+        fill="#34d399"
+        opacity="0.55"
+      />
+    </svg>
+  );
+}
 
 function App() {
   const [showAssessment, setShowAssessment] = useState(false);
@@ -59,7 +114,6 @@ function App() {
     setLoading(false);
   };
 
-  const isComplete = currentStep === 15 && answers[15] !== null;
   const progressPercent = ((currentStep + (answers[currentStep] !== null ? 1 : 0)) / 16) * 100;
 
   if (showAssessment) {
@@ -167,92 +221,253 @@ function App() {
     );
   }
 
+  const scrollToSection = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="landing-page">
-      <nav className="navbar">
-        <div className="logo">MindCare</div>
-      </nav>
+      <header className="navbar">
+        <div className="navbar-inner">
+          <a
+            href="#home"
+            className="logo"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToSection("home");
+            }}
+          >
+            MindCare
+          </a>
 
-      <section className="hero">
-        <div className="hero-content">
-          <h1>Understand Your Mental Health Better</h1>
-          <p>
-            Take a quick, scientifically-backed assessment to check your mental health risk level. 
-            A safe space for you to reflect and seek guidance.
-          </p>
-          <button className="primary-btn" onClick={() => setShowAssessment(true)}>
-            Start Assessment
-          </button>
+          <nav className="nav-links" aria-label="Main">
+            <a
+              href="#home"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection("home");
+              }}
+            >
+              Home
+            </a>
+            <a
+              href="#how-it-works"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection("how-it-works");
+              }}
+            >
+              How it works
+            </a>
+            <a
+              href="#help"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection("help");
+              }}
+            >
+              Help
+            </a>
+            <a
+              href="#resources"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection("resources");
+              }}
+            >
+              Resources
+            </a>
+          </nav>
+
+          <div className="nav-auth">
+            <button type="button" className="nav-login">
+              Log in
+            </button>
+            <button type="button" className="nav-signup">
+              Sign up
+            </button>
+          </div>
         </div>
-        <div className="hero-image">
-          <img src="/hero-illustration.png" alt="Mental Wellness Illustration" />
+      </header>
+
+      <section className="hero hero--mindful" id="home">
+        <div className="hero-bg" aria-hidden="true">
+          <span className="blob blob--1" />
+          <span className="blob blob--2" />
+          <span className="blob blob--3" />
+        </div>
+
+        <div className="hero-inner">
+          <div className="hero-content">
+            <p className="hero-eyebrow">Mental wellness · Gentle screening</p>
+            <h1>
+              Take a breath.
+              <span className="hero-title-accent"> Check in with yourself.</span>
+            </h1>
+            <p className="hero-lead">
+              A calm, private space to reflect on how you have been feeling—and get a thoughtful risk
+              snapshot in minutes. No judgment, just clarity.
+            </p>
+            <div className="hero-cta-row">
+              <button type="button" className="primary-btn" onClick={() => setShowAssessment(true)}>
+                Start assessment
+              </button>
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={() => scrollToSection("how-it-works")}
+              >
+                How it works
+              </button>
+            </div>
+            <ul className="hero-trust">
+              <li>
+                <span className="hero-trust-dot" aria-hidden="true" />
+                Anonymous
+              </li>
+              <li>
+                <span className="hero-trust-dot" aria-hidden="true" />
+                About 3 minutes
+              </li>
+              <li>
+                <span className="hero-trust-dot" aria-hidden="true" />
+                Not a diagnosis
+              </li>
+            </ul>
+          </div>
+
+          <div className="hero-visual-wrap">
+            <div className="hero-visual">
+              <HeroIllustration />
+            </div>
+            <div className="hero-float-card hero-float-card--a">
+              <span className="hero-float-label">You matter</span>
+              <span className="hero-float-value">Self-care first</span>
+            </div>
+            <div className="hero-float-card hero-float-card--b">
+              <span className="hero-float-label">Private</span>
+              <span className="hero-float-value">No account needed</span>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="how-it-works">
-        <h2>How It Works</h2>
-        <div className="steps-container">
-          <div className="step-card">
-            <div className="icon">📝</div>
-            <h3>Answer simple questions</h3>
-            <p>Complete a short survey about your feelings and habits.</p>
-          </div>
-          <div className="step-card">
-            <div className="icon">⚡</div>
-            <h3>Get instant analysis</h3>
-            <p>Our machine-learning model instantly evaluates your responses.</p>
-          </div>
-          <div className="step-card">
-            <div className="icon">🌱</div>
-            <h3>Receive guidance</h3>
-            <p>Get actionable insights and know when to seek professional help.</p>
+      <section className="how-it-works section-wave" id="how-it-works">
+        <div className="section-inner">
+          <p className="section-eyebrow">Simple steps</p>
+          <h2 className="section-title">How it works</h2>
+          <p className="section-sub">
+            Soft animations, clear words, and a flow designed to feel supportive—not clinical.
+          </p>
+          <div className="steps-container">
+            <article className="step-card">
+              <span className="step-num">01</span>
+              <h3>Answer gentle prompts</h3>
+              <p>Reflect on the last two weeks with plain-language questions you can complete at your pace.</p>
+            </article>
+            <article className="step-card">
+              <span className="step-num">02</span>
+              <h3>See an instant snapshot</h3>
+              <p>Our model summarizes patterns in your responses into a simple risk level overview.</p>
+            </article>
+            <article className="step-card">
+              <span className="step-num">03</span>
+              <h3>Know your next step</h3>
+              <p>Get guidance on self-care, talking to someone you trust, or reaching out to a professional.</p>
+            </article>
           </div>
         </div>
       </section>
 
       <section className="features">
-        <div className="features-content">
-          <h2>Why Use This?</h2>
-          <ul className="feature-list">
-            <li>
-              <span className="check-icon">✓</span>
-              <div>
-                <strong>Anonymous and safe</strong>
-                <p>We do not store your personal data.</p>
-              </div>
+        <div className="features-content section-inner">
+          <p className="section-eyebrow">Why MindCare</p>
+          <h2 className="section-title">Built to feel safe</h2>
+          <p className="section-sub section-sub--center">
+            Everything here is designed around privacy, speed, and kindness—so checking in never feels
+            overwhelming.
+          </p>
+          <ul className="feature-grid">
+            <li className="feature-tile">
+              <span className="feature-icon" aria-hidden="true">
+                01
+              </span>
+              <strong>Anonymous by design</strong>
+              <p>We do not ask for personal details to run the screening.</p>
             </li>
-            <li>
-              <span className="check-icon">✓</span>
-              <div>
-                <strong>Quick and easy</strong>
-                <p>Takes less than 3 minutes to complete.</p>
-              </div>
+            <li className="feature-tile">
+              <span className="feature-icon" aria-hidden="true">
+                02
+              </span>
+              <strong>Quick check-in</strong>
+              <p>Most people finish in under three minutes.</p>
             </li>
-            <li>
-              <span className="check-icon">✓</span>
-              <div>
-                <strong>Based on machine learning</strong>
-                <p>Driven by advanced algorithms for precise screening.</p>
-              </div>
+            <li className="feature-tile">
+              <span className="feature-icon" aria-hidden="true">
+                03
+              </span>
+              <strong>Informed by ML</strong>
+              <p>A model helps interpret your answers—always alongside human judgment for big decisions.</p>
             </li>
-            <li>
-              <span className="check-icon">✓</span>
-              <div>
-                <strong>Early awareness support</strong>
-                <p>Identify risks before they become harder to manage.</p>
-              </div>
+            <li className="feature-tile">
+              <span className="feature-icon" aria-hidden="true">
+                04
+              </span>
+              <strong>Early awareness</strong>
+              <p>Notice strain sooner and take action while things still feel manageable.</p>
             </li>
           </ul>
         </div>
       </section>
 
-      <section className="about">
-        <h2>About the Project</h2>
-        <p>
-          MindCare was created with the goal of making mental health screening more accessible. 
-          Often, distress goes unnoticed until it becomes severe. By offering a quick, easy-to-use 
-          tool, we hope to encourage early awareness and empower users to take charge of their mental well-being.
-        </p>
+      <section className="cta-band">
+        <div className="cta-band-inner section-inner">
+          <div className="cta-band-copy">
+            <h2>Ready when you are</h2>
+            <p>
+              You can pause anytime. When you are ready, we will walk through the questions together.
+            </p>
+          </div>
+          <button type="button" className="cta-band-btn" onClick={() => setShowAssessment(true)}>
+            Begin screening
+          </button>
+        </div>
+      </section>
+
+      <section className="help-section" id="help">
+        <div className="section-inner section-inner--narrow">
+          <p className="section-eyebrow">If you need help now</p>
+          <h2 className="section-title">Help</h2>
+          <p>
+            If you are in crisis or need immediate support, contact your local emergency services or a
+            crisis helpline. MindCare is a screening tool—not therapy and not a substitute for
+            professional care.
+          </p>
+        </div>
+      </section>
+
+      <section className="resources-section" id="resources">
+        <div className="section-inner section-inner--narrow">
+          <p className="section-eyebrow">Learn &amp; connect</p>
+          <h2 className="section-title">Resources</h2>
+          <p>
+            Trusted organizations, self-help guides, and pathways to professional support will live
+            here as we grow this library—so support is always one click away.
+          </p>
+        </div>
+      </section>
+
+      <section className="about section-soft" id="about">
+        <div className="section-inner section-inner--narrow">
+          <p className="section-eyebrow">Our story</p>
+          <h2 className="section-title">About MindCare</h2>
+          <p>
+            MindCare exists to make mental health screening feel approachable. Distress often hides
+            until it is loud—we hope a gentle, fast tool helps people notice sooner and choose their
+            next step with confidence.
+          </p>
+        </div>
       </section>
 
       <footer className="footer">

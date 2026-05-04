@@ -1,487 +1,734 @@
-import { useState } from "react";
-import "./App.css";
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import './App.css';
 
-function HeroIllustration() {
+import meditatingPerson from './meditating_person.png';
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) setUser(JSON.parse(storedUser));
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+
   return (
-    <svg
-      className="hero-illustration"
-      viewBox="0 0 520 420"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id="mh-sky" x1="40" y1="0" x2="480" y2="420" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#e9d5ff" />
-          <stop offset="0.45" stopColor="#fce7f3" />
-          <stop offset="1" stopColor="#fed7aa" />
-        </linearGradient>
-        <linearGradient id="mh-hill" x1="260" y1="260" x2="260" y2="400">
-          <stop stopColor="#c4b5fd" stopOpacity="0.35" />
-          <stop offset="1" stopColor="#a5b4fc" stopOpacity="0.12" />
-        </linearGradient>
-      </defs>
-      <rect x="8" y="8" width="504" height="404" rx="36" fill="url(#mh-sky)" />
-      <ellipse cx="270" cy="360" rx="210" ry="48" fill="url(#mh-hill)" />
-      <circle className="hero-svg-sun" cx="400" cy="96" r="44" fill="#fde68a" opacity="0.95" />
-      <ellipse cx="120" cy="320" rx="56" ry="18" fill="#86efac" opacity="0.45" />
-      <ellipse cx="400" cy="300" rx="48" ry="16" fill="#6ee7b7" opacity="0.35" />
-      <g className="hero-svg-figure">
-        <ellipse cx="230" cy="300" rx="72" ry="24" fill="#c7d2fe" opacity="0.55" />
-        <path
-          d="M230 200v72c0 24 20 44 44 44h8"
-          stroke="#6366f1"
-          strokeWidth="14"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+    <Router>
+      <div className="mindcare-app">
+        <Navbar 
+          user={user} 
+          onLogout={handleLogout} 
+          onAuthClick={(login) => { setIsLogin(login); setShowAuthModal(true); }} 
         />
-        <circle cx="230" cy="168" r="40" fill="#fef9c3" stroke="#fbbf24" strokeWidth="2.5" />
-        <path
-          d="M188 168c8-16 24-26 42-26s34 10 42 26"
-          stroke="#475569"
-          strokeWidth="3"
-          strokeLinecap="round"
-          opacity="0.35"
-        />
-      </g>
-      <circle className="hero-svg-dot" cx="100" cy="120" r="10" fill="#f472b6" opacity="0.65" />
-      <circle className="hero-svg-dot hero-svg-dot--delay" cx="360" cy="200" r="8" fill="#818cf8" opacity="0.6" />
-      <path
-        className="hero-svg-leaf"
-        d="M420 240c20-32 48-48 72-40-16 28-48 44-80 44-6-8-4-8 8-4z"
-        fill="#34d399"
-        opacity="0.55"
-      />
-    </svg>
+        
+        <Routes>
+          <Route path="/" element={<LandingPage user={user} onStart={() => { setIsLogin(true); setShowAuthModal(true); }} />} />
+          <Route path="/assessment" element={<AssessmentPage user={user} />} />
+          <Route path="/dashboard" element={<DashboardPage user={user} />} />
+          <Route path="/resources" element={<ResourcesPage user={user} />} />
+        </Routes>
+
+        <Footer />
+
+        {showAuthModal && (
+          <AuthModal 
+            isLogin={isLogin} 
+            setIsLogin={setIsLogin} 
+            onClose={() => setShowAuthModal(false)} 
+            onSuccess={(data) => { 
+              localStorage.setItem('user', JSON.stringify(data.user));
+              localStorage.setItem('token', data.token);
+              setUser(data.user); 
+              setShowAuthModal(false); 
+            }} 
+          />
+        )}
+      </div>
+    </Router>
   );
 }
 
-function App() {
-  const [showAssessment, setShowAssessment] = useState(false);
+function Navbar({ user, onLogout, onAuthClick }) {
+  const navigate = useNavigate();
+  return (
+    <nav className="serenity-navbar">
+      <div className="nav-inner">
+        <div className="nav-left" onClick={() => navigate('/')} style={{cursor: 'pointer'}}>
+          <div className="logo-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+              <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+            </svg>
+          </div>
+          <span className="brand-name">MindCare</span>
+        </div>
+        
+        <div className="nav-center">
+          <Link to="/">Home</Link>
+          {user && <Link to="/dashboard">Dashboard</Link>}
+          {user && <Link to="/resources">Resources</Link>}
+          <a href="#features">Features</a>
+          <a href="#about">About</a>
+        </div>
+
+        <div className="nav-right">
+          {user ? (
+            <>
+              <span className="user-greeting">Hi, {user.username}</span>
+              <button className="nav-btn-login" onClick={onLogout}>Logout</button>
+              <button className="nav-btn-start" onClick={() => navigate('/assessment')}>Start</button>
+            </>
+          ) : (
+            <>
+              <button className="nav-btn-login" onClick={() => onAuthClick(true)}>Login</button>
+              <button className="nav-btn-start" onClick={() => onAuthClick(false)}>Sign Up</button>
+            </>
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+function LandingPage({ user, onStart }) {
+  const navigate = useNavigate();
+  const startAssessment = () => {
+    if (user) navigate('/assessment');
+    else onStart();
+  };
+
+  return (
+    <div className="landing-page fade-in">
+      <main className="serenity-hero">
+        <div className="hero-inner">
+          <div className="hero-content-left">
+            <div className="hero-badge">
+              <span className="badge-dot"></span>
+              A safe space to check in
+            </div>
+            <h1 className="hero-heading">
+              Check Your <br />
+              Mental <br />
+              <span className="gradient-text">Well-being</span> <br />
+              Instantly
+            </h1>
+            <p className="hero-subtext">
+              Answer a few simple questions and understand your mental health risk level in a safe and private way.
+            </p>
+            <div className="hero-cta-group">
+              <button className="cta-primary" onClick={startAssessment}>
+                Start Assessment
+              </button>
+              {user && (
+                <button className="cta-secondary" onClick={() => navigate('/dashboard')}>
+                  View Dashboard →
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="hero-content-right">
+            <div className="illustration-card glass-card">
+              <img src={meditatingPerson} alt="Calm person meditating" className="hero-illustration float-1" />
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <section id="features" className="serenity-section features-section">
+        <div className="section-inner">
+          <div className="section-header">
+            <h2>Why Choose MindCare?</h2>
+            <p>Designed to provide a safe and supportive experience.</p>
+          </div>
+          <div className="features-grid">
+            <div className="feature-card glass-card">
+              <div className="feature-icon" style={{background: 'rgba(96, 165, 250, 0.2)'}}>⏱️</div>
+              <h3>Quick Assessment</h3>
+              <p>Takes less than 2 minutes to complete the evaluation.</p>
+            </div>
+            <div className="feature-card glass-card">
+              <div className="feature-icon" style={{background: 'rgba(52, 211, 153, 0.2)'}}>🔒</div>
+              <h3>Private & Secure</h3>
+              <p>Your responses are completely private and never stored.</p>
+            </div>
+            <div className="feature-card glass-card">
+              <div className="feature-icon" style={{background: 'rgba(167, 139, 250, 0.2)'}}>⚡</div>
+              <h3>Instant Results</h3>
+              <p>Get immediate insights into your current well-being.</p>
+            </div>
+            <div className="feature-card glass-card">
+              <div className="feature-icon" style={{background: 'rgba(250, 191, 106, 0.2)'}}>💡</div>
+              <h3>Helpful Suggestions</h3>
+              <p>Receive personalized tips based on your risk level.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="serenity-section cta-section">
+        <div className="cta-inner glass-card">
+          <h2>Your mental health matters.</h2>
+          <p>Take the first step today.</p>
+          <button className="cta-primary pulse-hover" onClick={startAssessment}>
+            Start Your Assessment Now
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+const ASSESSMENT_QUESTIONS = [
+  "Little interest or pleasure in doing things?",
+  "Feeling down, depressed, or hopeless?",
+  "Trouble falling or staying asleep, or sleeping too much?",
+  "Feeling tired or having little energy?",
+  "Poor appetite or overeating?",
+  "Feeling bad about yourself or that you are a failure?",
+  "Trouble concentrating on things, such as reading the newspaper?",
+  "Moving or speaking so slowly that other people could have noticed?",
+  "Thoughts that you would be better off dead?",
+  "Feeling nervous, anxious or on edge?",
+  "Not being able to stop or control worrying?",
+  "Worrying too much about different things?",
+  "Trouble relaxing?",
+  "Being so restless that it is hard to sit still?",
+  "Becoming easily annoyed or irritable?",
+  "Feeling afraid as if something awful might happen?"
+];
+
+const ZONES = [
+  { name: "🌱 Start", range: [0, 3], color: "#eff6ff" },
+  { name: "🌿 Calm Zone", range: [4, 7], color: "#ecfdf5" },
+  { name: "🌊 Reflection", range: [8, 11], color: "#f5f3ff" },
+  { name: "🌸 Balance", range: [12, 15], color: "#fff1f2" }
+];
+
+const EMOJI_OPTIONS = [
+  { label: "Not at all", value: 0, emoji: "😊" },
+  { label: "Several days", value: 1, emoji: "🙂" },
+  { label: "More than half", value: 2, emoji: "😐" },
+  { label: "Nearly every day", value: 3, emoji: "😞" }
+];
+
+const BUBBLE_OPTIONS = [
+  { label: "Rarely", value: 0 },
+  { label: "Sometimes", value: 1 },
+  { label: "Often", value: 2 },
+  { label: "Always", value: 3 }
+];
+
+const SEREN_PHRASES = [
+  "You're doing well",
+  "Let's continue gently",
+  "You're doing a brave thing ✨",
+  "Keep going, you matter 🌿",
+  "I'm here with you 🤍",
+  "Take your time, no rush"
+];
+
+function AssessmentPage({ user }) {
+  const navigate = useNavigate();
+  const [gameState, setGameState] = useState('welcome');
   const [answers, setAnswers] = useState(Array(16).fill(null));
-  const [currentStep, setCurrentStep] = useState(0);
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [xp, setXp] = useState(0);
+  const [serenMessage, setSerenMessage] = useState("Hi! I'm Seren. Let's start our journey.");
+  const [showXpGain, setShowXpGain] = useState(false);
+
+  useEffect(() => {
+    if (!user) navigate('/');
+  }, [user, navigate]);
+
+  const getCurrentZone = () => {
+    return ZONES.find(z => currentStep >= z.range[0] && currentStep <= z.range[1]) || ZONES[0];
+  };
 
   const handleOptionSelect = (value) => {
     const newAnswers = [...answers];
     newAnswers[currentStep] = value;
     setAnswers(newAnswers);
     
-    // Auto-advance
-    if (currentStep < 15) {
-      setTimeout(() => {
-        setCurrentStep(prev => prev + 1);
-      }, 400);
-    }
-  };
-
-  const handleNext = () => {
-    if (currentStep < 15) setCurrentStep(currentStep + 1);
-  };
-
-  const handlePrev = () => {
-    if (currentStep > 0) setCurrentStep(currentStep - 1);
-  };
-
-  const handleReset = () => {
-    if (window.confirm("Are you sure you want to restart the assessment?")) {
-      setAnswers(Array(16).fill(null));
-      setCurrentStep(0);
-      setResult("");
-    }
-  };
-
-  const handleSubmit = async () => {
-    // Fill any skipped questions with 0 to prevent backend errors
-    const finalAnswers = answers.map(a => a === null ? 0 : a);
+    setXp(prev => prev + 10);
+    setShowXpGain(true);
     
+    const randomMsg = SEREN_PHRASES[Math.floor(Math.random() * SEREN_PHRASES.length)];
+    setSerenMessage(randomMsg);
+
+    setTimeout(() => {
+      setShowXpGain(false);
+      if (currentStep < 15) {
+        if ((currentStep + 1) % 5 === 0) {
+          setGameState('break');
+        } else {
+          setCurrentStep(prev => prev + 1);
+        }
+      } else {
+        setGameState('finished');
+        handleSubmit(newAnswers, xp + 10);
+      }
+    }, 800);
+  };
+
+  const handleSubmit = async (finalAnswers, finalXp) => {
+    const numericAnswers = finalAnswers.map(a => a === null ? 0 : a);
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5001/predict", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ data: finalAnswers }),
+      const res = await fetch('http://localhost:5001/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          data: numericAnswers, 
+          userId: user.id, 
+          xp: finalXp 
+        }),
       });
       const data = await res.json();
       setResult(data.result);
     } catch (err) {
       console.error(err);
-      setResult("Error processing request");
+      setResult('Error processing request');
     }
     setLoading(false);
   };
 
-  const progressPercent = ((currentStep + (answers[currentStep] !== null ? 1 : 0)) / 16) * 100;
+  const activeZone = getCurrentZone();
 
-  if (showAssessment) {
+  if (gameState === 'welcome') {
     return (
-      <div className="assessment-container">
-        <header className="assessment-header">
-          <button className="back-btn" onClick={() => {setShowAssessment(false); setResult(""); setCurrentStep(0);}}>
-            &larr; Back to Home
-          </button>
-          <h2>Mental Health Assessment</h2>
-          <p className="subtitle">Answer a few simple questions to understand your mental health risk level</p>
-        </header>
-
-        <div className="questions-card">
-          {!result ? (
-            <>
-              <div className="progress-section">
-                <div className="progress-text">Question {currentStep + 1} of 16</div>
-                <div className="progress-bar-bg">
-                  <div className="progress-bar-fill" style={{ width: `${progressPercent}%` }}></div>
-                </div>
+      <div className="assessment-container fade-in">
+        <div className="game-container glass-card pop-in">
+          <div className="game-streak-badge">🔥 3 Day Streak</div>
+          <h2 className="game-title">Ready for your Mental Wellness Journey? 🌿</h2>
+          <div className="journey-preview">
+            {ZONES.map((z, i) => (
+              <div key={z.name} className="zone-node">
+                <div className="zone-dot">{i + 1}</div>
+                <span>{z.name}</span>
               </div>
-
-              <div className="question-content fade-in">
-                <h3>Question {currentStep + 1}</h3>
-                <p className="question-prompt">Over the last 2 weeks, how often have you experienced this feeling or habit?</p>
-                
-                <div className="options-grid">
-                  {[
-                    { label: "Never", value: 0 },
-                    { label: "Sometimes", value: 1 },
-                    { label: "Often", value: 2 },
-                    { label: "Always", value: 3 }
-                  ].map((opt) => (
-                    <label 
-                      key={opt.value} 
-                      className={`option-card ${answers[currentStep] === opt.value ? 'selected' : ''}`}
-                    >
-                      <input
-                        type="radio"
-                        name={`q${currentStep}`}
-                        value={opt.value}
-                        checked={answers[currentStep] === opt.value}
-                        onChange={() => handleOptionSelect(opt.value)}
-                      />
-                      <span className="radio-custom"></span>
-                      {opt.label}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="navigation-buttons">
-                <button 
-                  className="nav-btn prev" 
-                  onClick={handlePrev} 
-                  disabled={currentStep === 0}
-                >
-                  Previous
-                </button>
-                
-                {currentStep < 15 ? (
-                  <button 
-                    className="nav-btn next" 
-                    onClick={handleNext} 
-                    disabled={answers[currentStep] === null}
-                  >
-                    Next
-                  </button>
-                ) : (
-                  <button 
-                    className="submit-btn final-submit" 
-                    onClick={handleSubmit} 
-                    disabled={loading || answers[15] === null}
-                  >
-                    {loading ? "Analyzing..." : "Submit Assessment"}
-                  </button>
-                )}
-              </div>
-              
-              <div className="reset-container">
-                <button className="reset-btn" onClick={handleReset}>Reset Assessment</button>
-              </div>
-            </>
-          ) : (
-            <div className={`result-box ${result.toLowerCase()}`}>
-              <h3>Your Risk Level: {result}</h3>
-              <p>
-                {result === "Low" && "Your responses suggest a low risk. Keep up the good self-care! Stay mindful and healthy."}
-                {result === "Medium" && "Your responses indicate some distress. Consider reaching out for support from a friend, family member, or a counselor."}
-                {result === "High" && "Your responses suggest a high risk level. We strongly recommend speaking with a healthcare professional or therapist."}
-                {result === "Error processing request" && "There was an issue processing your request. Please ensure the backend is running."}
-              </p>
-              <button className="nav-btn next" onClick={handleReset} style={{marginTop: "2rem"}}>
-                Take Assessment Again
-              </button>
-            </div>
-          )}
+            ))}
+            <div className="zone-node"><div className="zone-dot">✨</div><span>Clarity</span></div>
+          </div>
+          <div className="breathing-container">
+            <div className="breathing-circle">Breathe</div>
+            <p>Take a deep breath. We'll explore together.</p>
+          </div>
+          <button className="cta-primary" onClick={() => setGameState('playing')}>Begin Journey</button>
         </div>
-
-        <p className="assessment-disclaimer">
-          <strong>Note:</strong> This assessment is strictly anonymous and not a medical diagnosis.
-        </p>
       </div>
     );
   }
 
-  const scrollToSection = (id) => {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (gameState === 'break') {
+    return (
+      <div className="assessment-container fade-in">
+        <div className="game-container glass-card break-screen pop-in">
+          <h2>Take a deep breath 🌬️</h2>
+          <p>Pause for a moment. You've earned some calm points!</p>
+          <div className="xp-badge">+50 Calm Points Bonus 🌿</div>
+          <div className="breathing-container"><div className="breathing-circle">Exhale</div></div>
+          <button className="cta-primary" onClick={() => {
+            setXp(prev => prev + 50);
+            setCurrentStep(prev => prev + 1);
+            setGameState('playing');
+          }}>Continue Journey</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'finished') {
+    return (
+      <div className="assessment-container fade-in">
+        <div className="game-container glass-card result-reveal-card pop-in">
+          {loading ? (
+            <div className="loading-spinner"></div>
+          ) : (
+            <>
+              <div className="confetti-effect">🎉 Journey Completed!</div>
+              <h2>Wonderful job, {user?.username}! 💙</h2>
+              <div className="final-xp">Total Calm Points: {xp} 🌿</div>
+              <div className={`wellness-badge ${result?.toLowerCase()}`}>
+                {result === "Low" ? "🌿 Balanced State" : result === "Medium" ? "🌼 Needs Attention" : "🔴 Support Recommended"}
+              </div>
+              <div className="risk-level-display">Risk Level: <strong>{result}</strong></div>
+              <p className="result-text" style={{marginBottom: '2rem', marginTop: '1rem'}}>Your journey results have been saved to your dashboard.</p>
+              <div className="hero-cta-group" style={{justifyContent: 'center'}}>
+                <button className="cta-primary" onClick={() => navigate('/resources', { state: { result } })}>View Support Resources</button>
+                <button className="cta-secondary" onClick={() => navigate('/dashboard')}>See Dashboard</button>
+                <button className="cta-secondary" onClick={() => navigate('/')}>Back Home</button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="assessment-container fade-in" style={{background: activeZone.color}}>
+      <div className="game-container glass-card pop-in">
+        <div className="game-stats-header">
+          <div className="level-badge">{activeZone.name} • Level {currentStep + 1}</div>
+          <div className="xp-counter">✨ {xp} Points</div>
+        </div>
+        <div className="progress-bar-bg" style={{marginBottom: '2rem'}}>
+          <div className="progress-bar-fill" style={{ width: `${(currentStep / 16) * 100}%` }}></div>
+        </div>
+        <div className="companion-ai">
+          <div className="seren-avatar">🌿</div>
+          <div className="seren-bubble">{serenMessage}</div>
+        </div>
+        <h3 className="question-prompt" style={{fontSize: '1.5rem', minHeight: '4.5rem'}}>{ASSESSMENT_QUESTIONS[currentStep]}</h3>
+        {currentStep % 4 === 1 ? (
+          <div className="slider-interaction pop-in">
+            <input type="range" min="0" max="3" step="1" value={answers[currentStep] || 0} onChange={(e) => handleOptionSelect(parseInt(e.target.value))} />
+            <div className="slider-labels"><span>Rarely</span><span>Sometimes</span><span>Often</span><span>Always</span></div>
+          </div>
+        ) : currentStep % 4 === 2 ? (
+          <div className="bubble-options-grid pop-in">
+            {BUBBLE_OPTIONS.map(opt => <div key={opt.value} className="bubble-opt" onClick={() => handleOptionSelect(opt.value)}>{opt.label}</div>)}
+          </div>
+        ) : (
+          <div className="emoji-options-grid pop-in">
+            {EMOJI_OPTIONS.map((opt) => (
+              <div key={opt.value} className={`emoji-card ${answers[currentStep] === opt.value ? 'selected' : ''}`} onClick={() => handleOptionSelect(opt.value)}>
+                <span className="emoji-icon">{opt.emoji}</span>
+                <span className="emoji-label">{opt.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {showXpGain && <div className="xp-gain-popup animate-up">+10 XP</div>}
+        <button className="back-btn" onClick={() => navigate('/')} style={{marginTop: '2rem', position: 'static', transform: 'none'}}>Exit Journey</button>
+      </div>
+    </div>
+  );
+}
+
+function DashboardPage({ user }) {
+  const navigate = useNavigate();
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/');
+      return;
+    }
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch(`http://localhost:5001/history/${user.id}`);
+        const data = await res.json();
+        setHistory(data);
+      } catch (err) {
+        console.error(err);
+      }
+      setLoading(false);
+    };
+    fetchHistory();
+  }, [user, navigate]);
+
+  if (loading) return <div className="assessment-container"><div className="loading-spinner"></div></div>;
+
+  return (
+    <div className="dashboard-container fade-in">
+      <div className="section-inner">
+        <header className="dashboard-header">
+          <h1>Welcome back, {user.username} 🌿</h1>
+          <p>Track your mental wellness journey over time.</p>
+        </header>
+
+        <div className="stats-grid">
+          <div className="stat-card glass-card">
+            <h3>Total Journeys</h3>
+            <div className="stat-value">{history.length}</div>
+          </div>
+          <div className="stat-card glass-card">
+            <h3>Total Calm Points</h3>
+            <div className="stat-value">{history.reduce((acc, curr) => acc + curr.xp, 0)}</div>
+          </div>
+          <div className="stat-card glass-card">
+            <h3>Last Result</h3>
+            <div className="stat-value">{history[0]?.result || "N/A"}</div>
+          </div>
+        </div>
+
+        <h2 style={{margin: '3rem 0 1.5rem'}}>Journey History</h2>
+        <div className="history-list">
+          {history.length > 0 ? (
+            history.map((item) => (
+              <div key={item.id} className="history-item glass-card pop-in">
+                <div className="history-info">
+                  <span className="history-date">{new Date(item.timestamp).toLocaleDateString()}</span>
+                  <span className={`history-result-tag ${item.result.toLowerCase()}`}>{item.result}</span>
+                </div>
+                <div className="history-xp">✨ {item.xp} XP</div>
+              </div>
+            ))
+          ) : (
+            <div className="empty-history glass-card">
+              <p>You haven't completed any journeys yet.</p>
+              <button className="cta-primary" onClick={() => navigate('/assessment')} style={{marginTop: '1rem'}}>Start First Journey</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResourcesPage({ user }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [riskLevel, setRiskLevel] = useState(location.state?.result || null);
+  const [loading, setLoading] = useState(!riskLevel);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/');
+      return;
+    }
+    if (!riskLevel) {
+      const fetchLatestResult = async () => {
+        try {
+          const res = await fetch(`http://localhost:5001/history/${user.id}`);
+          const data = await res.json();
+          if (data.length > 0) {
+            setRiskLevel(data[0].result);
+          } else {
+            setRiskLevel('Low');
+          }
+        } catch (err) {
+          console.error(err);
+          setRiskLevel('Low');
+        }
+        setLoading(false);
+      };
+      fetchLatestResult();
+    }
+  }, [user, navigate, riskLevel]);
+
+  const resources = {
+    Low: {
+      title: "Maintaining Your Well-being",
+      description: "You're in a good place. Here are some globally recognized ways to keep your mental health strong and balanced.",
+      articles: [
+        { title: "WHO: Looking after our mental health", url: "https://www.who.int/campaigns/connecting-the-world-to-combat-coronavirus/healthyathome/healthyathome---mental-health" },
+        { title: "NHS: 5 steps to mental wellbeing", url: "https://www.nhs.uk/mental-health/self-help/guides-tools-and-activities/five-steps-to-mental-wellbeing/" }
+      ],
+      videos: [
+        { title: "Headspace: Mindfulness for Beginners", url: "https://www.youtube.com/watch?v=inpok4MKVLM" },
+        { title: "TED: The science of gratitude", url: "https://www.youtube.com/watch?v=WPPPFqsECz0" }
+      ],
+      tips: [
+        "Stay physically active - even a 10-minute walk can boost your mood.",
+        "Maintain a consistent sleep schedule to support brain health.",
+        "Practice gratitude by noting 3 things you're thankful for each day."
+      ]
+    },
+    Medium: {
+      title: "Supporting Your Journey",
+      description: "It's normal to feel a bit overwhelmed. These world-class resources can help you manage stress and regain balance.",
+      articles: [
+        { title: "NIMH: Tips for Managing Stress", url: "https://www.nimh.nih.gov/health/publications/so-stressed-out-fact-sheet" },
+        { title: "Mind: How to manage anxiety", url: "https://www.mind.org.uk/information-support/types-of-mental-health-problems/anxiety-and-panic-attacks/self-care/" }
+      ],
+      videos: [
+        { title: "NHS: Progressive Muscle Relaxation", url: "https://www.youtube.com/watch?v=ihO02wUzgkc" },
+        { title: "TED: How to make stress your friend", url: "https://www.youtube.com/watch?v=RcGyVTAoXEU" }
+      ],
+      tips: [
+        "Try the 4-7-8 breathing technique when feeling overwhelmed.",
+        "Limit caffeine and sugar, as they can mimic or worsen anxiety symptoms.",
+        "Identify and write down your stress triggers to better understand them."
+      ]
+    },
+    High: {
+      title: "Guided Support & Care",
+      description: "You're facing significant challenges, and seeking support is a sign of strength. Please utilize these authoritative resources.",
+      articles: [
+        { title: "NIMH: Help for Mental Illnesses", url: "https://www.nimh.nih.gov/health/find-help" },
+        { title: "WHO: Mental Health in Emergencies", url: "https://www.who.int/news-room/fact-sheets/detail/mental-health-in-emergencies" }
+      ],
+      videos: [
+        { title: "Psych Hub: When to see a therapist", url: "https://www.youtube.com/watch?v=u4v_7t909a0" },
+        { title: "WHO: I had a black dog (Depression)", url: "https://www.youtube.com/watch?v=XiCrniLQGYc" }
+      ],
+      tips: [
+        "Reach out to a mental health professional or a trusted doctor immediately.",
+        "Save crisis hotline numbers in your phone for quick access.",
+        "Focus on grounding: name 5 things you see, 4 things you can touch, and 3 things you hear."
+      ]
+    }
+  };
+
+  const content = resources[riskLevel] || resources.Low;
+
+  if (loading) return <div className="assessment-container"><div className="loading-spinner"></div></div>;
+
+  return (
+    <div className="dashboard-container fade-in">
+      <div className="section-inner">
+        <header className="dashboard-header">
+          <div className="hero-badge" style={{
+            marginBottom: '1rem', 
+            background: riskLevel === 'High' ? 'rgba(239, 68, 68, 0.1)' : riskLevel === 'Medium' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)', 
+            color: riskLevel === 'High' ? '#ef4444' : riskLevel === 'Medium' ? '#f59e0b' : '#10b981'
+          }}>
+             {riskLevel} Risk Resources
+          </div>
+          <h1>{content.title} 🌿</h1>
+          <p>{content.description}</p>
+        </header>
+
+        <div className="resources-grid" style={{marginTop: '3rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem'}}>
+           <section className="resource-section">
+              <h2 style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem'}}>
+                <span className="feature-icon" style={{background: 'rgba(96, 165, 250, 0.2)', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px'}}>📄</span> 
+                Helpful Articles
+              </h2>
+              <div className="history-list">
+                {content.articles.map((art, i) => (
+                  <a key={i} href={art.url} target="_blank" rel="noopener noreferrer" className="history-item glass-card pop-in" style={{textDecoration: 'none', color: 'inherit', display: 'flex', justifyContent: 'space-between', padding: '1.5rem', marginBottom: '1rem'}}>
+                    <div className="history-info">
+                      <span style={{fontWeight: '600'}}>{art.title}</span>
+                    </div>
+                    <div className="history-xp" style={{color: '#6366f1'}}>Read →</div>
+                  </a>
+                ))}
+              </div>
+           </section>
+
+           <section className="resource-section">
+              <h2 style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem'}}>
+                <span className="feature-icon" style={{background: 'rgba(250, 191, 106, 0.2)', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px'}}>🎬</span> 
+                Recommended Videos
+              </h2>
+              <div className="history-list">
+                {content.videos.map((vid, i) => (
+                  <a key={i} href={vid.url} target="_blank" rel="noopener noreferrer" className="history-item glass-card pop-in" style={{textDecoration: 'none', color: 'inherit', display: 'flex', justifyContent: 'space-between', padding: '1.5rem', marginBottom: '1rem'}}>
+                    <div className="history-info">
+                      <span style={{fontWeight: '600'}}>{vid.title}</span>
+                    </div>
+                    <div className="history-xp" style={{color: '#f59e0b'}}>Watch →</div>
+                  </a>
+                ))}
+              </div>
+           </section>
+        </div>
+
+        <section className="tips-section" style={{marginTop: '4rem', padding: '2rem', background: 'rgba(99, 102, 241, 0.05)', borderRadius: '24px', border: '1px solid rgba(99, 102, 241, 0.1)'}}>
+          <h2 style={{marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px'}}>
+            <span style={{fontSize: '1.5rem'}}>💡</span> MindCare Tips
+          </h2>
+          <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem'}}>
+            {content.tips.map((tip, i) => (
+              <div key={i} className="tip-card" style={{display: 'flex', gap: '12px', alignItems: 'flex-start'}}>
+                <div style={{background: '#6366f1', color: 'white', minWidth: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 'bold'}}>
+                  {i + 1}
+                </div>
+                <p style={{margin: 0, fontSize: '0.95rem', lineHeight: '1.6', color: '#4b5563'}}>{tip}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div style={{marginTop: '4rem', textAlign: 'center'}}>
+           <button className="cta-primary" onClick={() => navigate('/assessment')} style={{marginRight: '1rem'}}>Retake Journey</button>
+           <button className="cta-secondary" onClick={() => navigate('/dashboard')}>Back to Dashboard</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AuthModal({ isLogin, setIsLogin, onClose, onSuccess }) {
+  const [authForm, setAuthForm] = useState({ username: '', password: '' });
+  const [authError, setAuthError] = useState('');
+
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    const endpoint = isLogin ? '/login' : '/signup';
+    try {
+      const res = await fetch(`http://localhost:5001${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(authForm),
+      });
+      const data = await res.json();
+      if (!res.ok) setAuthError(data.error || 'Authentication failed');
+      else onSuccess(data);
+    } catch (err) {
+      setAuthError('Server error');
+    }
   };
 
   return (
-    <div className="landing-page">
-      <header className="navbar">
-        <div className="navbar-inner">
-          <a
-            href="#home"
-            className="logo"
-            onClick={(e) => {
-              e.preventDefault();
-              scrollToSection("home");
-            }}
-          >
-            MindCare
-          </a>
-
-          <nav className="nav-links" aria-label="Main">
-            <a
-              href="#home"
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToSection("home");
-              }}
-            >
-              Home
-            </a>
-            <a
-              href="#how-it-works"
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToSection("how-it-works");
-              }}
-            >
-              How it works
-            </a>
-            <a
-              href="#help"
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToSection("help");
-              }}
-            >
-              Help
-            </a>
-            <a
-              href="#resources"
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToSection("resources");
-              }}
-            >
-              Resources
-            </a>
-          </nav>
-
-          <div className="nav-auth">
-            <button type="button" className="nav-login">
-              Log in
-            </button>
-            <button type="button" className="nav-signup">
-              Sign up
-            </button>
+    <div className="modal-overlay">
+      <div className="auth-modal glass-card fade-in">
+        <button className="close-btn" onClick={onClose}>✕</button>
+        <h2>{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
+        <p>{isLogin ? 'Login to continue your journey' : 'Join MindCare anonymously with just a username'}</p>
+        {authError && <div className="auth-error">{authError}</div>}
+        <form onSubmit={handleAuthSubmit} className="auth-form">
+          <div className="form-group">
+            <label>Username</label>
+            <input 
+              type="text" 
+              value={authForm.username} 
+              onChange={e => setAuthForm({...authForm, username: e.target.value})} 
+              required 
+              placeholder="Pick a unique username"
+            />
           </div>
-        </div>
-      </header>
-
-      <section className="hero hero--mindful" id="home">
-        <div className="hero-bg" aria-hidden="true">
-          <span className="blob blob--1" />
-          <span className="blob blob--2" />
-          <span className="blob blob--3" />
-        </div>
-
-        <div className="hero-inner">
-          <div className="hero-content">
-            <p className="hero-eyebrow">Mental wellness · Gentle screening</p>
-            <h1>
-              Take a breath.
-              <span className="hero-title-accent"> Check in with yourself.</span>
-            </h1>
-            <p className="hero-lead">
-              A calm, private space to reflect on how you have been feeling—and get a thoughtful risk
-              snapshot in minutes. No judgment, just clarity.
-            </p>
-            <div className="hero-cta-row">
-              <button type="button" className="primary-btn" onClick={() => setShowAssessment(true)}>
-                Start assessment
-              </button>
-              <button
-                type="button"
-                className="secondary-btn"
-                onClick={() => scrollToSection("how-it-works")}
-              >
-                How it works
-              </button>
-            </div>
-            <ul className="hero-trust">
-              <li>
-                <span className="hero-trust-dot" aria-hidden="true" />
-                Anonymous
-              </li>
-              <li>
-                <span className="hero-trust-dot" aria-hidden="true" />
-                About 3 minutes
-              </li>
-              <li>
-                <span className="hero-trust-dot" aria-hidden="true" />
-                Not a diagnosis
-              </li>
-            </ul>
+          <div className="form-group">
+            <label>Password</label>
+            <input 
+              type="password" 
+              value={authForm.password} 
+              onChange={e => setAuthForm({...authForm, password: e.target.value})} 
+              required 
+              placeholder="Your secure password"
+            />
           </div>
-
-          <div className="hero-visual-wrap">
-            <div className="hero-visual">
-              <HeroIllustration />
-            </div>
-            <div className="hero-float-card hero-float-card--a">
-              <span className="hero-float-label">You matter</span>
-              <span className="hero-float-value">Self-care first</span>
-            </div>
-            <div className="hero-float-card hero-float-card--b">
-              <span className="hero-float-label">Private</span>
-              <span className="hero-float-value">No account needed</span>
-            </div>
-          </div>
+          <button type="submit" className="cta-primary submit-auth-btn">{isLogin ? 'Login' : 'Sign Up'}</button>
+        </form>
+        <div className="auth-switch">
+          {isLogin ? "Don't have an account? " : "Already have an account? "}
+          <span onClick={() => {setIsLogin(!isLogin); setAuthError('');}}>{isLogin ? 'Sign Up' : 'Login'}</span>
         </div>
-      </section>
-
-      <section className="how-it-works section-wave" id="how-it-works">
-        <div className="section-inner">
-          <p className="section-eyebrow">Simple steps</p>
-          <h2 className="section-title">How it works</h2>
-          <p className="section-sub">
-            Soft animations, clear words, and a flow designed to feel supportive—not clinical.
-          </p>
-          <div className="steps-container">
-            <article className="step-card">
-              <span className="step-num">01</span>
-              <h3>Answer gentle prompts</h3>
-              <p>Reflect on the last two weeks with plain-language questions you can complete at your pace.</p>
-            </article>
-            <article className="step-card">
-              <span className="step-num">02</span>
-              <h3>See an instant snapshot</h3>
-              <p>Our model summarizes patterns in your responses into a simple risk level overview.</p>
-            </article>
-            <article className="step-card">
-              <span className="step-num">03</span>
-              <h3>Know your next step</h3>
-              <p>Get guidance on self-care, talking to someone you trust, or reaching out to a professional.</p>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section className="features">
-        <div className="features-content section-inner">
-          <p className="section-eyebrow">Why MindCare</p>
-          <h2 className="section-title">Built to feel safe</h2>
-          <p className="section-sub section-sub--center">
-            Everything here is designed around privacy, speed, and kindness—so checking in never feels
-            overwhelming.
-          </p>
-          <ul className="feature-grid">
-            <li className="feature-tile">
-              <span className="feature-icon" aria-hidden="true">
-                01
-              </span>
-              <strong>Anonymous by design</strong>
-              <p>We do not ask for personal details to run the screening.</p>
-            </li>
-            <li className="feature-tile">
-              <span className="feature-icon" aria-hidden="true">
-                02
-              </span>
-              <strong>Quick check-in</strong>
-              <p>Most people finish in under three minutes.</p>
-            </li>
-            <li className="feature-tile">
-              <span className="feature-icon" aria-hidden="true">
-                03
-              </span>
-              <strong>Informed by ML</strong>
-              <p>A model helps interpret your answers—always alongside human judgment for big decisions.</p>
-            </li>
-            <li className="feature-tile">
-              <span className="feature-icon" aria-hidden="true">
-                04
-              </span>
-              <strong>Early awareness</strong>
-              <p>Notice strain sooner and take action while things still feel manageable.</p>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <section className="cta-band">
-        <div className="cta-band-inner section-inner">
-          <div className="cta-band-copy">
-            <h2>Ready when you are</h2>
-            <p>
-              You can pause anytime. When you are ready, we will walk through the questions together.
-            </p>
-          </div>
-          <button type="button" className="cta-band-btn" onClick={() => setShowAssessment(true)}>
-            Begin screening
-          </button>
-        </div>
-      </section>
-
-      <section className="help-section" id="help">
-        <div className="section-inner section-inner--narrow">
-          <p className="section-eyebrow">If you need help now</p>
-          <h2 className="section-title">Help</h2>
-          <p>
-            If you are in crisis or need immediate support, contact your local emergency services or a
-            crisis helpline. MindCare is a screening tool—not therapy and not a substitute for
-            professional care.
-          </p>
-        </div>
-      </section>
-
-      <section className="resources-section" id="resources">
-        <div className="section-inner section-inner--narrow">
-          <p className="section-eyebrow">Learn &amp; connect</p>
-          <h2 className="section-title">Resources</h2>
-          <p>
-            Trusted organizations, self-help guides, and pathways to professional support will live
-            here as we grow this library—so support is always one click away.
-          </p>
-        </div>
-      </section>
-
-      <section className="about section-soft" id="about">
-        <div className="section-inner section-inner--narrow">
-          <p className="section-eyebrow">Our story</p>
-          <h2 className="section-title">About MindCare</h2>
-          <p>
-            MindCare exists to make mental health screening feel approachable. Distress often hides
-            until it is loud—we hope a gentle, fast tool helps people notice sooner and choose their
-            next step with confidence.
-          </p>
-        </div>
-      </section>
-
-      <footer className="footer">
-        <div className="footer-content">
-          <p className="disclaimer">
-            <strong>Disclaimer:</strong> This is not a medical diagnosis tool. If you are experiencing a crisis, please contact your local emergency services or a mental health professional immediately.
-          </p>
-          <div className="contact-info">
-            <p>MindCare © 2026. All rights reserved.</p>
-            <p>Contact: support@mindcare.example.com</p>
-          </div>
-        </div>
-      </footer>
+      </div>
     </div>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="serenity-footer" id="about">
+      <div className="footer-inner">
+        <div className="footer-left">
+          <div className="brand-name">MindCare</div>
+          <p>A calming space for mental health awareness.</p>
+        </div>
+        <div className="footer-links">
+          <a href="#about">About</a>
+          <a href="#contact">Contact</a>
+          <a href="#privacy">Privacy Policy</a>
+        </div>
+      </div>
+    </footer>
   );
 }
 
